@@ -1,9 +1,8 @@
 import os
-import spacy
 from pymongo import MongoClient
-
-# Load the language model
-nlp = spacy.load("en_core_web_sm")
+import re
+from unidecode import unidecode
+from simplemma import lemmatize
 
 # Configure the MongoDB connection
 client = MongoClient('mongodb://localhost:27017/')
@@ -13,6 +12,34 @@ processed_books_collection = db['PROCESSED_BOOKS']  # Collection name for proces
 
 # Predefined pre-path
 PRE_PATH = "datalake/books/"
+
+# Clean and lemmatize words
+def clean_word(word):
+    # Remove unwanted characters and normalize the word
+    word = re.sub(r'^_.*|_.*_|_.*$|[\d]+|[^\w\s]', '', word)  # Remove special characters and digits
+    word = unidecode(word).strip('_').strip()  # Normalize the word and remove leading/trailing underscores and spaces
+    return word if word else None  # Return None if the word is empty
+
+def lemm_add(dictionary, word, lang='en'):
+    if word:  # Ensure word is not None
+        lemm = lemmatize(word, lang)
+        if lemm != word:
+            if lemm not in dictionary:
+                dictionary[lemm] = {'allocations': {}, 'total': 0}
+            if "allocations" in dictionary[word]:
+                pop = dictionary.pop(word)
+                for book_key, new_info in pop['allocations'].items():
+                    if book_key in dictionary[lemm]['allocations']:
+                        # Merge positions without duplicates
+                        existing_positions = set(tuple(pos) for pos in dictionary[lemm]['allocations'][book_key]['position'])
+                        existing_positions.update(tuple(pos) for pos in new_info['position'])
+                        dictionary[lemm]['allocations'][book_key]['position'] = list(existing_positions)
+                        # Update count based on unique positions
+                        dictionary[lemm]['allocations'][book_key]['times'] = len(existing_positions)
+                    else:
+                        dictionary[lemm]['allocations'][book_key] = new_info
+                # Update total to reflect the correct sum
+                dictionary[lemm]['total'] += pop['total']
 
 # Function to process a book and update word occurrences
 def process_book(file_name):
@@ -34,43 +61,42 @@ def process_book(file_name):
 
     # Iterate through paragraphs
     for i, paragraph in enumerate(paragraphs):
-        doc_paragraph = nlp(paragraph)
+        words = [clean_word(word) for word in paragraph.lower().split()]
+        words = [word for word in words if word]  # Filter out None values after cleaning
 
-        # Extract common nouns (tokens of type NOUN)
-        common_nouns = [token.text for token in doc_paragraph if token.pos_ == "NOUN"]
+        # Count how many times each word appears in the paragraph
+        for word in set(words):  # Use set() to avoid duplicate counts
+            word_count = words.count(word)
 
-        # Count how many times each noun appears in the paragraph
-        for noun in set(common_nouns):  # Use set() to avoid duplicate counts
-            # Count occurrences of the word in the paragraph
-            noun_count = common_nouns.count(noun)
-
-            if noun not in word_occurrences:
-                word_occurrences[noun] = {
+            if word not in word_occurrences:
+                word_occurrences[word] = {
                     'count': 0,  # Initialize total count
                     'books': {}
                 }
 
             # Increment the total count of the word
-            word_occurrences[noun]['count'] += noun_count
+            word_occurrences[word]['count'] += word_count
 
             # Add book and paragraph information
-            if book_name not in word_occurrences[noun]['books']:
-                word_occurrences[noun]['books'][book_name] = {}
+            if book_name not in word_occurrences[word]['books']:
+                word_occurrences[word]['books'][book_name] = {}
 
             # Add the paragraph number with the count of occurrences
-            word_occurrences[noun]['books'][book_name][f"paragraph {i}"] = noun_count
+            word_occurrences[word]['books'][book_name][f"paragraph {i}"] = word_count
 
-    # Save the occurrences in MongoDB
-    for word, data in word_occurrences.items():
+    # Lemmatize words and save the occurrences in MongoDB
+    for word in list(word_occurrences.keys()):
+        lemm_add(word_occurrences, word)
+
         # Find the existing document
         existing_data = words_collection.find_one({'word': word})
 
         if existing_data:
             # If the word already exists, update the total count
-            new_count = existing_data['count'] + data['count']
+            new_count = existing_data['count'] + word_occurrences[word]['count']
 
             # Update the list of books and paragraphs
-            for book, paragraphs in data['books'].items():
+            for book, paragraphs in word_occurrences[word]['books'].items():
                 if book in existing_data['books']:
                     # Add only paragraphs not already present and update total count
                     for paragraph, count in paragraphs.items():
@@ -92,10 +118,10 @@ def process_book(file_name):
             # If the word does not exist, insert it
             words_collection.insert_one({
                 'word': word,
-                'count': data['count'],  # Initialize count with the total count
-                'books': data['books']
+                'count': word_occurrences[word]['count'],  # Initialize count with the total count
+                'books': word_occurrences[word]['books']
             })
-            print(f"Inserted {word}: {data['count']} occurrences.")
+            print(f"Inserted {word}: {word_occurrences[word]['count']} occurrences.")
 
     # Add the processed book to the collection
     processed_books_collection.insert_one({'book_name': book_name})
