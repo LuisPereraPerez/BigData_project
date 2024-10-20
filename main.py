@@ -1,6 +1,6 @@
 import crawler
 import indexer1
-# import indexer2
+import indexer2
 
 def main():
     """Main function to execute the crawler and indexer modules."""
@@ -10,8 +10,8 @@ def main():
     print("Starting the indexing process 1...")
     indexer1.execute()
     
-    # print("Starting the indexing process 2...")
-    # indexer2.execute()
+    print("Starting the indexing process 2...")
+    indexer2.execute()
 
     print("Process completed.")
 
