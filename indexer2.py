@@ -128,8 +128,10 @@ def process_book(file_name):
     print(f"The book '{book_name}' has been processed and recorded.")
 
 # Main function to run the program
-def execute():
-    choice = input("Do you want to process a (1) single file or (2) all files in the folder? (1/2): ")
+def execute(choice=None):
+    if not choice:
+        choice = input("Do you want to process a (1) single file or (2) all files in the folder? (1/2): ")
+
     if choice == '1':
         file_name = input("Enter the name of the file to process (without the path): ")
         process_book(file_name)
