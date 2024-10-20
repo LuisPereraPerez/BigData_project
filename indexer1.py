@@ -159,19 +159,26 @@ def update_global_index(dictionary, book_id):
 def read_numbers_from_file(file_path):
     try:
         lines = read_lines(file_path)
+        if len(lines) == 0:
+            raise ValueError("The file is empty.")
         first_number = int(lines[0].strip())
         second_number = int(lines[1].strip()) if len(lines) > 1 else 1
 
         write_lines(file_path, [f"{first_number}\n", f"{first_number}\n"])
         return first_number, second_number
-    except ValueError:
-        print("The file content is not a valid integer.")
+    except ValueError as e:
+        print(f"Error reading numbers from file: {e}")
+        return 0, 0
+def update_last_book_id(file_path, new_first_number, new_second_number):
+    write_lines(file_path, [f"{new_first_number}\n", f"{new_second_number}\n"])
 
+        
 def execute():
     n, m = read_numbers_from_file("resources/lastBookId.txt")
     for i in range(m, n + 1):
         index_book(i)
         print(f"Book with ID {i} has been indexed.")
+    update_last_book_id("resources/lastBookId.txt", n, n + 1)
 
 if __name__ == "__main__":
     execute()
