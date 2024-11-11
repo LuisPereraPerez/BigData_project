@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 
 public class FileLastIdManager implements LastIdManager {
     // Ruta al archivo dentro del módulo Crawler
-    private static final String LAST_ID_FILE = "last_id.txt";
+    private static final String LAST_ID_FILE = "crawler/last_id.txt";
 
     @Override
     public int getLastDownloadedId() {
