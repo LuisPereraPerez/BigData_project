@@ -6,11 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Indexer1" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="BD_crawler" target="17" />
+      <module name="Indexer1" target="18" />
     </bytecodeTargetLevel>
   </component>
 </project>
