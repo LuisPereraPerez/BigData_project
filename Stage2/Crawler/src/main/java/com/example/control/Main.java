@@ -1,10 +1,9 @@
 package com.example.control;
 
-import com.example.control.*;
 import com.example.interfaces.*;
 
 public class Main {
-    private static final int NUM_BOOKS = 10;
+    private static final int NUM_BOOKS = 3;
     private static final String SAVE_DIR = "datalake/books";
     private static final int MAX_DOWNLOAD_ATTEMPTS = 3;
 

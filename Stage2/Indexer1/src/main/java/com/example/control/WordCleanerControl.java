@@ -11,10 +11,14 @@ public class WordCleanerControl implements WordCleaner {
 
     @Override
     public String cleanWord(String word) {
-        // Remove unwanted characters and normalize
-        word = word.replaceAll("^_.*|_.*_|_.*$|\\d+|\\W+", "");
+        // Eliminar caracteres especiales y quedarnos con la parte antes de ellos
+        word = word.replaceAll("['’].*$", ""); // Esto elimina cualquier cosa después de ' o ’
+        word = word.replaceAll("[^\\p{L}]", ""); // Mantener solo letras
+
+        // Normalizar y eliminar caracteres no ASCII
         word = Normalizer.normalize(word, Normalizer.Form.NFD);
         word = word.replaceAll("[^\\p{ASCII}]", "");
+
         return word.trim();
     }
 }

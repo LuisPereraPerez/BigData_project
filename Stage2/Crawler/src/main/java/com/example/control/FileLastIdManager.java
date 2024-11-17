@@ -9,7 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class FileLastIdManager implements LastIdManager {
-    private static final String LAST_ID_FILE = "Crawler/resources/last_id.txt";
+    // Crawler/resources/last_id.txt is a file that stores the last downloaded ID.
+    private static final String LAST_ID_FILE = "resources/last_id_crawler.txt";
 
     @Override
     public int getLastDownloadedId() {

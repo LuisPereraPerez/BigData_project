@@ -5,13 +5,12 @@ import com.example.model.BookAllocation;
 import com.example.model.Position;
 import com.example.model.Word;
 
-import java.io.File;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IndexerControl implements BookIndexer {
@@ -66,10 +65,24 @@ public class IndexerControl implements BookIndexer {
 
     private void saveOrUpdateWord(Word word) throws IOException {
         String wordText = word.getWord().toLowerCase();
+
+        // Lista de palabras reservadas de Windows
+        Set<String> reservedWindowsWords = Set.of(
+                "con", "prn", "aux", "nul",
+                "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
+                "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"
+        );
+
+        // Si la palabra es reservada, ignorar
+        if (reservedWindowsWords.contains(wordText)) {
+            System.out.println("Skipping reserved word: " + wordText);
+            return; // No continuar con el procesamiento
+        }
+
         String firstLetter = wordText.substring(0, 1);
         String twoFirstsLetter = wordText.length() > 1 ? wordText.substring(0, 2) : firstLetter;
 
-        String directoryPath = "datamart/reverse_indexes/" + firstLetter + "/" + twoFirstsLetter;
+        String directoryPath = "datamart/reverse_indexes_Indexer1/" + firstLetter + "/" + twoFirstsLetter;
         Files.createDirectories(Paths.get(directoryPath));
 
         String jsonFilePath = directoryPath + "/" + word.getWord() + ".json";
@@ -82,6 +95,7 @@ public class IndexerControl implements BookIndexer {
             jsonFileManager.writeJson(jsonFilePath, word);
         }
     }
+
 
     private void mergeWordData(Word existingWord, Word newWord) {
         for (Map.Entry<String, BookAllocation> entry : newWord.getAllocations().entrySet()) {
@@ -101,7 +115,8 @@ public class IndexerControl implements BookIndexer {
     }
 
     public void executeIndexing() throws IOException {
-        String lastBookPath = "Indexer1/resources/lastBookId.txt";
+        // Indexer1/resources/lastBookId.txt is a file that stores the last processed book ID.
+        String lastBookPath = "resources/lastBookId_indexer1.txt";
         int lastProcessedBookId = lastBookManager.readLastProcessedBookId(lastBookPath);
 
         Path booksDirectory = Paths.get("datalake/books");
