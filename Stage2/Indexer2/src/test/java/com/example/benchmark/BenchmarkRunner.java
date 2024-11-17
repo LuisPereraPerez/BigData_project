@@ -9,27 +9,25 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
-@BenchmarkMode(Mode.SingleShotTime) // Mide el tiempo de una única ejecución
-@OutputTimeUnit(TimeUnit.MILLISECONDS) // Configura milisegundos como unidad de tiempo
-@State(Scope.Thread) // Cada hilo tiene su propia instancia
-@Warmup(iterations = 0) // No realiza iteraciones de calentamiento
-@Measurement(iterations = 1) // Solo realiza una iteración de medición
-@Fork(1) // Se ejecuta en un solo proceso independiente
+@BenchmarkMode(Mode.SingleShotTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@State(Scope.Thread)
+@Warmup(iterations = 0)
+@Measurement(iterations = 1)
+@Fork(1)
 public class BenchmarkRunner {
 
-    // Método que será ejecutado por JMH
     @Benchmark
     public void benchmarkMain() {
-        Main.main(new String[]{}); // Llama al método main de tu clase Main
+        Main.main(new String[]{});
     }
 
-    // Punto de entrada para ejecutar el benchmark
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-                .include(BenchmarkRunner.class.getSimpleName()) // Incluye esta clase
-                .forks(1) // Número de procesos independientes
+                .include(BenchmarkRunner.class.getSimpleName())
+                .forks(1)
                 .build();
 
-        new Runner(opt).run(); // Ejecuta el benchmark
+        new Runner(opt).run();
     }
 }

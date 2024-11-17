@@ -1,4 +1,3 @@
-// En el archivo BookManager.java dentro de com.example.control
 package com.example.control;
 
 import com.example.interfaces.*;

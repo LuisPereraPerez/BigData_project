@@ -20,41 +20,35 @@ public class BookIndexer implements Indexer {
     public BookIndexer(FileHandler fileHandler, WordDataHandler wordDataHandler) {
         this.fileHandler = fileHandler;
         this.wordDataHandler = wordDataHandler;
-        this.indexedBooks = loadIndexedBooks();  // Load previously indexed books
+        this.indexedBooks = loadIndexedBooks();
     }
 
     @Override
     public void execute() {
         try {
-            // Obtener el último ID procesado
             String lastIndexedBookId = getLastIndexedBookId();
             int lastProcessedId = lastIndexedBookId.isEmpty() ? 0 : Integer.parseInt(lastIndexedBookId);
             System.out.println("Last indexed book ID: " + lastProcessedId);
 
-            // Cargar todos los archivos de libros
             List<String> bookFiles = fileHandler.loadBooks();
 
-            // Filtrar libros por aquellos cuyo ID sea mayor al último procesado
             bookFiles.removeIf(bookFile -> {
                 String bookId = getBookId(bookFile);
                 int currentBookId = Integer.parseInt(bookId);
                 return currentBookId <= lastProcessedId;
             });
 
-            // Procesar los libros restantes
             for (String bookFile : bookFiles) {
                 String bookId = getBookId(bookFile);
                 List<String> paragraphs = fileHandler.readLines(bookFile);
                 processBook(bookId, paragraphs);
 
-                // Marcar el libro como indexado
                 indexedBooks.add(bookId);
 
-                // Guardar el ID del libro procesado
                 saveIndexedBooks();
                 System.out.println("Book " + bookId + " indexed successfully.");
             }
-        } catch (Exception e) { // Manejo genérico de excepciones
+        } catch (Exception e) {
             System.out.println("Error during execution: " + e.getMessage());
             e.printStackTrace();
         }
@@ -71,13 +65,12 @@ public class BookIndexer implements Indexer {
                 System.out.println("Error reading the last indexed book ID: " + e.getMessage());
             }
         }
-        return ""; // Retorna vacío si el archivo no existe
+        return "";
     }
 
     private void processBook(String bookId, List<String> paragraphs) {
         tsvFileHandler = new TsvFileHandler();
 
-        // Lista de palabras reservadas de Windows
         Set<String> reservedWindowsWords = Set.of(
                 "con", "prn", "aux", "nul",
                 "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
@@ -87,47 +80,39 @@ public class BookIndexer implements Indexer {
         for (int paragraphIndex = 0; paragraphIndex < paragraphs.size(); paragraphIndex++) {
             String paragraph = paragraphs.get(paragraphIndex);
 
-            // Obtener y limpiar las palabras del párrafo
             List<String> words = wordDataHandler.cleanAndSplit(paragraph);
 
-            // Limpiar cada palabra y lematizar
             for (int i = 0; i < words.size(); i++) {
                 String word = words.get(i);
 
-                // Verificar si la palabra es reservada
                 if (reservedWindowsWords.contains(word.toLowerCase())) {
                     System.out.println("Skipping reserved word: " + word);
-                    continue; // Saltar la palabra si es reservada
+                    continue;
                 }
 
-                word = wordDataHandler.cleanWord(word); // Limpia la palabra
-                word = wordDataHandler.lemmAdd(word);   // Lematiza la palabra
+                word = wordDataHandler.cleanWord(word);
+                word = wordDataHandler.lemmAdd(word);
                 words.set(i, word);
             }
 
-            // Mapa para contar la ocurrencia de palabras en este párrafo
             Map<String, Integer> wordCountMap = new HashMap<>();
 
             for (String word : words) {
                 if (!word.isEmpty() && !reservedWindowsWords.contains(word.toLowerCase())) {
-                    // Actualizar el conteo de palabras en el mapa
                     wordCountMap.put(word, wordCountMap.getOrDefault(word, 0) + 1);
                 }
             }
 
-            // Guardar todas las palabras con su conteo final en el archivo TSV
             for (Map.Entry<String, Integer> entry : wordCountMap.entrySet()) {
                 String word = entry.getKey();
                 int count = entry.getValue();
 
-                // Verificar si la palabra es reservada antes de guardarla
                 if (reservedWindowsWords.contains(word.toLowerCase())) {
                     System.out.println("Skipping reserved word during saving: " + word);
-                    continue; // Saltar la palabra si es reservada
+                    continue;
                 }
 
                 try {
-                    // Guardar la palabra en el archivo TSV con el conteo final
                     tsvFileHandler.saveWordsToFile(word, bookId, paragraphIndex + 1, count);
                 } catch (Exception e) {
                     System.out.println("Error while saving the word to the TSV file: " + e.getMessage());

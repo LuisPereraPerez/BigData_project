@@ -66,17 +66,15 @@ public class IndexerControl implements BookIndexer {
     private void saveOrUpdateWord(Word word) throws IOException {
         String wordText = word.getWord().toLowerCase();
 
-        // Lista de palabras reservadas de Windows
         Set<String> reservedWindowsWords = Set.of(
                 "con", "prn", "aux", "nul",
                 "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
                 "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"
         );
 
-        // Si la palabra es reservada, ignorar
         if (reservedWindowsWords.contains(wordText)) {
             System.out.println("Skipping reserved word: " + wordText);
-            return; // No continuar con el procesamiento
+            return;
         }
 
         String firstLetter = wordText.substring(0, 1);
@@ -115,22 +113,21 @@ public class IndexerControl implements BookIndexer {
     }
 
     public void executeIndexing() throws IOException {
-        // Indexer1/resources/lastBookId.txt is a file that stores the last processed book ID.
         String lastBookPath = "resources/lastBookId_indexer1.txt";
         int lastProcessedBookId = lastBookManager.readLastProcessedBookId(lastBookPath);
 
         Path booksDirectory = Paths.get("datalake/books");
         try (Stream<Path> bookFiles = Files.list(booksDirectory)) {
             bookFiles
-                    .filter(Files::isRegularFile) // Solo archivos regulares
-                    .filter(path -> path.getFileName().toString().matches("\\d+\\.txt")) // Archivos con nombres numéricos
-                    .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString().replace(".txt", "")))) // Ordenar por número
-                    .filter(path -> Integer.parseInt(path.getFileName().toString().replace(".txt", "")) > lastProcessedBookId) // Filtrar solo los que no se han procesado
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().matches("\\d+\\.txt"))
+                    .sorted(Comparator.comparingInt(path -> Integer.parseInt(path.getFileName().toString().replace(".txt", ""))))
+                    .filter(path -> Integer.parseInt(path.getFileName().toString().replace(".txt", "")) > lastProcessedBookId)
                     .forEach(path -> {
                         try {
                             int bookId = Integer.parseInt(path.getFileName().toString().replace(".txt", ""));
-                            indexBook(bookId); // Indexar el libro
-                            lastBookManager.updateLastProcessedBookId(lastBookPath, bookId); // Actualizar el ID del último libro procesado
+                            indexBook(bookId);
+                            lastBookManager.updateLastProcessedBookId(lastBookPath, bookId);
                         } catch (IOException e) {
                             System.err.println("Error indexing book: " + path.getFileName());
                             e.printStackTrace();

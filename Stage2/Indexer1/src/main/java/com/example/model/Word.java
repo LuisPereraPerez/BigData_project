@@ -8,14 +8,12 @@ public class Word {
     private Map<String, BookAllocation> allocations;
     private int total;
 
-    // Constructor
     public Word(String word, Map<String, BookAllocation> allocations, int total) {
         this.word = word;
         this.allocations = allocations;
         this.total = total;
     }
 
-    // Getters and Setters
     public String getWord() {
         return word;
     }

@@ -37,11 +37,9 @@ public class TsvFileHandler implements FileHandler {
 
     // Exception handling within the method without declaring throws IOException
     public void saveWordsToFile(String word, String bookId, int paragraphIndex, int count) {
-        // Extraer solo el ID del libro desde bookId
-        String[] pathParts = bookId.split("[/\\\\]"); // Divide por / o \ según el sistema operativo
-        String bookIdOnly = pathParts[pathParts.length - 1]; // Obtiene la última parte como ID del libro
+        String[] pathParts = bookId.split("[/\\\\]");
+        String bookIdOnly = pathParts[pathParts.length - 1];
 
-        // Crear la ruta de directorio usando las primeras dos letras de la palabra
         String subfolder = word.length() > 1 ? word.substring(0, 2) : word.substring(0, 1);
         String directoryPath = "datamart/reverse_indexes_Indexer2/" + subfolder.charAt(0) + "/" + subfolder;
 
@@ -54,16 +52,13 @@ public class TsvFileHandler implements FileHandler {
         File file = new File(filePath);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            // Si el archivo no existe, escribir la cabecera antes de cualquier dato
-            if (file.length() == 0) { // Verificar si el archivo está vacío
+            if (file.length() == 0) {
                 writer.write("Book_ID\tLine\tOccurrences");
                 writer.newLine();
             }
 
-            // Crear la línea a añadir con el formato requerido
             String lineToAdd = bookIdOnly + "\t" + paragraphIndex + "\t" + count;
 
-            // Escribir la línea de datos
             writer.write(lineToAdd);
             writer.newLine();
         } catch (IOException e) {
