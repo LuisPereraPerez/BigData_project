@@ -19,5 +19,6 @@
         <module>Crawler</module>
         <module>Indexer1</module>
         <module>Indexer2</module>
+        <module>QueryEngine</module>
     </modules>
 </project>

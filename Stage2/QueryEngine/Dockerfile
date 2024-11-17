@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY resources /app/resources
 
-COPY target/Indexer2-1.0-SNAPSHOT.jar app.jar
+COPY target/QueryEngine-1.0-SNAPSHOT.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
