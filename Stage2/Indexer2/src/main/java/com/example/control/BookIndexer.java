@@ -5,11 +5,7 @@ import com.example.interfaces.Indexer;
 import com.example.interfaces.WordDataHandler;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BookIndexer implements Indexer {
     private final FileHandler fileHandler;
@@ -32,6 +28,9 @@ public class BookIndexer implements Indexer {
 
             List<String> bookFiles = fileHandler.loadBooks();
 
+            bookFiles.sort(Comparator.comparingInt(bookFile -> Integer.parseInt(getBookId(bookFile))));
+
+            // Remove books that have already been indexed (based on the last indexed book ID)
             bookFiles.removeIf(bookFile -> {
                 String bookId = getBookId(bookFile);
                 int currentBookId = Integer.parseInt(bookId);
@@ -55,12 +54,12 @@ public class BookIndexer implements Indexer {
     }
 
     private String getLastIndexedBookId() {
-        String filePath = "resources/lastBookId_indexer2.txt";
+        String filePath = "Indexer2/resources/lastBookId_indexer2.txt";
         File file = new File(filePath);
 
         if (file.exists()) {
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                return reader.readLine().trim(); // Retorna la primera línea del archivo
+                return reader.readLine().trim();
             } catch (IOException e) {
                 System.out.println("Error reading the last indexed book ID: " + e.getMessage());
             }
@@ -123,19 +122,15 @@ public class BookIndexer implements Indexer {
 
 
     private String getBookId(String bookFilePath) {
-        String fileName = new File(bookFilePath).getName(); // Extraer solo el nombre del archivo
-        return fileName.replace(".txt", ""); // Eliminar la extensión .txt
+        String fileName = new File(bookFilePath).getName();
+        return fileName.replace(".txt", "");
     }
 
     // Load the list of indexed books from a file
     private Set<String> loadIndexedBooks() {
         Set<String> indexedBooks = new HashSet<>();
-
-        // Ruta relativa a la carpeta resources
-        // Indexer2/resources/lastBookId.txt Local usage
-        String filePath = "resources/lastBookId_indexer2.txt";
+        String filePath = "Indexer2/resources/lastBookId_indexer2.txt";
         File indexedBooksFile = new File(filePath);
-
         if (indexedBooksFile.exists()) {
             try (BufferedReader reader = new BufferedReader(new FileReader(indexedBooksFile))) {
                 String line;
@@ -151,8 +146,7 @@ public class BookIndexer implements Indexer {
     }
 
     private void saveIndexedBooks() {
-        // Indexer2/resources Local usage
-        String directoryPath = "resources";
+        String directoryPath = "Indexer2/resources";
         File dir = new File(directoryPath);
         if (!dir.exists()) {
             dir.mkdirs();
@@ -163,13 +157,17 @@ public class BookIndexer implements Indexer {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(indexedBooksFile))) {
             if (!indexedBooks.isEmpty()) {
-                // Obtener el último ID en el conjunto (usando el último por orden natural)
+
                 String lastBookId = indexedBooks.stream()
-                        .map(bookId -> bookId.replaceAll("\\D+", "")) // Extraer solo números del bookId
-                        .max(String::compareTo) // Obtener el máximo por orden natural
+                        .map(bookId -> bookId.replaceAll("\\D+", ""))
+                        .filter(id -> !id.isEmpty())
+                        .mapToInt(Integer::parseInt)
+                        .max()
+                        .stream()
+                        .mapToObj(String::valueOf)
+                        .findFirst()
                         .orElse("");
 
-                // Escribir solo el último ID extraído en el archivo
                 writer.write(lastBookId);
                 writer.newLine();
             }
